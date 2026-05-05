@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sodium | Immersive Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Progress Bar specific overrides */
+        #music-progress {
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+            transition: background 0.1s ease;
+        }
+        #music-progress::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #a855f7; /* Purple thumb */
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+            transition: transform 0.1s;
+        }
+        #music-progress:active::-webkit-slider-thumb {
+            transform: scale(1.3);
+        }
+    </style>
+</head>
+<body class="antialiased h-screen w-screen relative overflow-hidden">
+
+    <!-- Video Background Container -->
+    <div id="video-container" class="absolute inset-0 w-full h-full z-0 transition-opacity duration-1000"></div>
+    
+    <!-- Vignette / Dimmer overlay -->
+    <div class="absolute inset-0 w-full h-full z-0 bg-gradient-to-b from-black/40 via-transparent to-black/70 pointer-events-none"></div>
+
+    <!-- Main Application UI -->
+    <div id="app-ui" class="relative z-10 flex flex-col h-full transition-all duration-500">
+        
+        <!-- Navbar -->
+        <header class="flex justify-between items-center px-8 py-6">
+            <div class="text-xl font-semibold tracking-[0.3em] flex items-center gap-2">
+                SODIUM<span class="text-white/40">_</span>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <div class="hidden md:flex items-center gap-3 text-xs tracking-widest text-white/60 glass px-4 py-2 rounded-full">
+                    <span id="status-text">SILENT</span>
+                    <div id="equalizer" class="flex gap-[3px] h-4 items-end">
+                        <div class="eq-bar h-1"></div>
+                        <div class="eq-bar h-1"></div>
+                        <div class="eq-bar h-1"></div>
+                    </div>
+                </div>
+
+                <div id="auth-section" class="relative group">
+                    <button onclick="toggleModal()" id="login-btn" class="glass p-3 rounded-full hover:bg-white/10 transition-all text-white/70 hover:text-white">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </button>
+                    <div id="user-menu" class="hidden absolute right-0 mt-4 w-48 glass-panel rounded-xl overflow-hidden shadow-2xl origin-top-right transform transition-all opacity-0 group-hover:opacity-100 group-hover:translate-y-0 translate-y-2 pointer-events-none group-hover:pointer-events-auto">
+                        <div class="px-4 py-3 border-b border-white/10 text-xs text-white/50 tracking-wider" id="username-display">Logged in</div>
+                        <button onclick="logout()" class="w-full text-left px-4 py-3 text-sm hover:bg-white/5 transition-colors text-red-400">End Session</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Workspace Area -->
+        <main class="flex-grow flex justify-between items-start px-8 pb-24 pt-4 overflow-hidden">
+            
+            <!-- LEFT PANEL: Visuals -->
+            <aside id="left-panel" class="glass-panel w-72 rounded-2xl p-6 flex flex-col gap-6 transition-all duration-300 ease-in-out self-start">
+                <div class="flex justify-between items-center w-full">
+                    <h3 class="content-to-hide text-xs font-semibold tracking-[0.2em] text-white/50">ENVIRONMENT</h3>
+                    <button onclick="togglePanel('left-panel')" class="text-white/40 hover:text-white transition-colors p-1">
+                        <svg id="left-panel-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="transition-transform duration-300"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                </div>
+                
+                <div class="content-to-hide flex flex-col gap-3">
+                    <button onclick="setVideo('Apart_Rain_1.mp4', this)" class="scene-btn w-full text-left px-4 py-3 rounded-xl border border-white/10 hover:bg-white/10 transition-all text-sm tracking-wide active-scene glass">
+                        Apartment Window
+                    </button>
+                    <button onclick="setVideo('Cabin_Rain_1.mp4', this)" class="scene-btn w-full text-left px-4 py-3 rounded-xl border border-transparent hover:bg-white/5 transition-all text-sm tracking-wide text-white/70">
+                        Cozy Cabin View
+                    </button>
+                    <button onclick="setVideo('Cabin_Rain_2.mp4', this)" class="scene-btn w-full text-left px-4 py-3 rounded-xl border border-transparent hover:bg-white/5 transition-all text-sm tracking-wide text-white/70">
+                        Cozy Cabin Room
+                    </button>
+                    <button onclick="setVideo('Cafe_Rain_1.mp4', this)" class="scene-btn w-full text-left px-4 py-3 rounded-xl border border-transparent hover:bg-white/5 transition-all text-sm tracking-wide text-white/70">
+                        Cafe Entrance
+                    </button>
+                    <button onclick="setVideo('Cafe_Rain_2.mp4', this)" class="scene-btn w-full text-left px-4 py-3 rounded-xl border border-transparent hover:bg-white/5 transition-all text-sm tracking-wide text-white/70">
+                        Cafe Interior
+                    </button>
+                </div>
+            </aside>
+
+            <!-- CENTER: Focus Timer -->
+            <div class="flex flex-col items-center justify-center flex-grow pointer-events-none mt-10">
+                
+                <div class="glass-panel p-8 rounded-[2rem] flex flex-col items-center gap-6 pointer-events-auto hover:scale-105 transition-transform duration-500">
+                    
+                    <!-- Timer Mode Selection -->
+                    <div class="flex gap-4 mb-2 justify-center w-full border-b border-white/10 pb-4">
+                        <button id="mode-timer" onclick="switchTimerMode('timer')" class="text-[10px] tracking-widest text-white border-b border-white pb-1 transition-all">TIMER</button>
+                        <button id="mode-stopwatch" onclick="switchTimerMode('stopwatch')" class="text-[10px] tracking-widest text-white/40 pb-1 hover:text-white/70 transition-all">STOPWATCH</button>
+                        <button id="mode-clock" onclick="switchTimerMode('clock')" class="text-[10px] tracking-widest text-white/40 pb-1 hover:text-white/70 transition-all">CLOCK</button>
+                    </div>
+
+                    <!-- Display Areas -->
+                    <div id="display-timer" class="flex items-center justify-center gap-1">
+                        <input type="text" id="timer-min" maxlength="2" value="25" onchange="updateTimerFromInput()" class="timer-input w-20 text-6xl font-light tracking-tighter tabular-nums bg-transparent border-b-2 border-transparent text-center outline-none transition-colors">
+                        <span class="text-4xl text-white/40 mb-2">:</span>
+                        <input type="text" id="timer-sec" maxlength="2" value="00" onchange="updateTimerFromInput()" class="timer-input w-20 text-6xl font-light tracking-tighter tabular-nums bg-transparent border-b-2 border-transparent text-center outline-none transition-colors">
+                    </div>
+                    
+                    <!-- Shared Display for Stopwatch & Clock -->
+                    <div id="display-other" class="hidden flex items-center justify-center text-6xl font-light tracking-tighter tabular-nums mb-2">
+                        00:00
+                    </div>
+
+                    <!-- Controls -->
+                    <div id="timer-controls" class="flex gap-4">
+                        <button onclick="toggleTimer()" id="timer-toggle" class="text-xs tracking-widest text-white/50 hover:text-white transition-colors">START</button>
+                        <span class="text-white/20">|</span>
+                        <button onclick="resetTimer()" class="text-xs tracking-widest text-white/50 hover:text-white transition-colors">RESET</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Audio Mixer -->
+            <aside id="right-panel" class="glass-panel w-72 rounded-2xl p-6 flex flex-col gap-6 max-h-[80vh] transition-all duration-300 ease-in-out self-start">
+                <div class="flex justify-between items-center w-full">
+                    <button onclick="togglePanel('right-panel')" class="text-white/40 hover:text-white transition-colors p-1">
+                        <svg id="right-panel-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="transition-transform duration-300"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                    <h3 class="content-to-hide text-xs font-semibold tracking-[0.2em] text-white/50">MIXER</h3>
+                </div>
+
+                <div class="content-to-hide flex flex-col gap-6 overflow-y-auto custom-scrollbar">
+                    <!-- Music Section -->
+                    <div>
+                        <h3 class="text-[10px] font-semibold tracking-[0.2em] text-white/30 mb-4 uppercase">Music</h3>
+                        <div id="music-list" class="grid grid-cols-2 gap-2 mb-4">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="music-upload" class="block w-full text-center p-2 rounded-lg border border-dashed border-white/20 hover:border-white/40 text-[10px] text-white/50 cursor-pointer transition-colors mb-2">
+                                + UPLOAD TRACK
+                            </label>
+                            <input type="file" id="music-upload" accept="audio/*" class="hidden" onchange="handleFileUpload(this)">
+                            <button onclick="stopAudio('music')" class="w-full p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 text-[10px] border border-transparent transition-all">Stop Music</button>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/40"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
+                            <input type="range" id="music-vol" min="0" max="1" step="0.01" value="0.5" oninput="changeVolume('music', this.value)">
+                        </div>
+                    </div>
+
+                    <!-- Ambience Section -->
+                    <div>
+                        <h3 class="text-[10px] font-semibold tracking-[0.2em] text-white/30 mb-4 uppercase">Ambience</h3>
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button data-id="Rain_1.mp3" onclick="toggleAudio('ambience', 'Rain_1.mp3')" class="audio-btn amb-btn p-2 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] border border-transparent transition-all truncate">Rain</button>
+                            <button onclick="stopAudio('ambience')" class="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 text-[10px] border border-transparent transition-all col-span-2">Stop Ambience</button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/40"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                            <input type="range" id="ambience-vol" min="0" max="1" step="0.01" value="0.5" oninput="changeVolume('ambience', this.value)">
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- PLAYLIST CONTROL BAR -->
+    <div id="player-bar" class="fixed bottom-0 left-0 w-full glass border-t border-white/10 px-8 py-4 z-40 transition-transform duration-500 translate-y-full flex flex-col justify-center">
+        <div class="flex justify-between items-center max-w-5xl mx-auto w-full gap-8">
+            <div class="w-1/4 text-xs font-semibold tracking-wider truncate text-white/70" id="now-playing-title">No Track</div>
+            <div class="w-2/4 flex flex-col items-center gap-2">
+                <div class="flex justify-center items-center gap-6">
+                    <button onclick="playPrevious()" class="text-white/50 hover:text-white transition-colors">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+                    </button>
+                    <button onclick="toggleMusicPlayPause()" id="player-play-btn" class="text-white hover:scale-110 transition-transform">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                    </button>
+                    <button onclick="playNext()" class="text-white/50 hover:text-white transition-colors">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+                    </button>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="flex items-center gap-3 text-[10px] font-mono text-white/50 w-full">
+                    <span id="track-current-time">0:00</span>
+                    <input type="range" id="music-progress" class="flex-grow" min="0" max="100" value="0" 
+                           onmousedown="isDragging=true" onmouseup="isDragging=false; seekMusic(this.value)"
+                           oninput="this.style.background = `linear-gradient(to right, #a855f7 ${this.value}%, rgba(255, 255, 255, 0.2) ${this.value}%)`">
+                    <span id="track-duration">0:00</span>
+                </div>
+            </div>
+
+            <!-- Playlist Controls -->
+            <div class="w-1/4 flex justify-end gap-3">
+                <button onclick="toggleShuffle()" id="shuffle-btn" class="text-white/50 hover:text-white flex items-center gap-2 text-[10px] uppercase tracking-wider transition-colors border border-transparent px-3 py-1.5 rounded-lg">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                </button>
+                <button onclick="toggleLoop()" class="text-white/50 hover:text-white flex items-center gap-2 text-[10px] uppercase tracking-wider transition-colors border border-white/10 px-3 py-1.5 rounded-lg bg-white/5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                    <span id="loop-text">Loop All</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-panel w-96 p-8 rounded-2xl relative transform scale-95 transition-transform duration-300" id="auth-card">
+            <button onclick="toggleModal()" class="absolute top-4 right-4 text-white/40 hover:text-white">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="flex gap-6 mb-8 border-b border-white/10 pb-2">
+                <button onclick="setAuthTab('login')" id="tab-login" class="text-sm font-semibold tracking-wider text-white border-b-2 border-white pb-2 -mb-[10px]">LOGIN</button>
+                <button onclick="setAuthTab('signup')" id="tab-signup" class="text-sm font-semibold tracking-wider text-white/40 pb-2 -mb-[10px]">SIGN UP</button>
+            </div>
+            <div id="auth-error" class="hidden text-red-400 text-xs mb-4 p-2 bg-red-500/10 rounded border border-red-500/20"></div>
+            <form id="auth-form" onsubmit="handleAuth(event)" class="flex flex-col gap-4">
+                <div>
+                    <label class="block text-[10px] tracking-widest text-white/40 mb-2">USERNAME</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white/40 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-[10px] tracking-widest text-white/40 mb-2">PASSWORD</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white/40 transition-colors">
+                </div>
+                <button type="submit" id="auth-submit-btn" class="mt-4 w-full bg-white text-black font-semibold tracking-wide py-3 rounded-lg hover:bg-gray-200 transition-colors">INITIALIZE</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 glass px-6 py-3 rounded-full text-sm font-medium tracking-wide opacity-0 pointer-events-none transition-all duration-300 translate-y-4 z-50"></div>
+
+    <script>
+        const MEDIA_BASE = '/static/media/';
+        const UPLOAD_BASE = '/static/uploads/';
+        
+        const FALLBACKS = {
+            videos: {
+                'Apart_Rain_1.mp4': 'https://cdn.pixabay.com/video/2020/05/25/40134-424911048_tiny.mp4',
+                'Cabin_Rain_1.mp4': 'https://cdn.pixabay.com/video/2019/11/04/28731-370335028_tiny.mp4',
+                'Cafe_Rain_1.mp4': 'https://cdn.pixabay.com/video/2020/04/09/35760-408107779_tiny.mp4',
+            },
+            audio: {
+                '2 AM_Lofi.mp3': 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3',
+                'Dreamland_Lofi.mp3': 'https://cdn.pixabay.com/download/audio/2022/02/10/audio_fc48af67b2.mp3',
+                'Taiyaki_Lofi.mp3': 'https://cdn.pixabay.com/download/audio/2021/08/08/audio_dc39bde808.mp3',
+                'Rain_1.mp3': 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3'
+            }
+        };
+
+        let state = {
+            user: null,
+            video: 'Apart_Rain_1.mp4',
+            music: { obj: null, file: null, vol: 0.5, isUpload: false },
+            ambience: { obj: null, file: null, vol: 0.5 },
+            customMusic: []
+        };
+
+        // UI State Variables
+        let timer = { interval: null, timeLeft: 25 * 60, isRunning: false, initialMinutes: 25 };
+        let timerMode = 'timer'; // 'timer', 'stopwatch', 'clock'
+        let stopwatchTime = 0;
+        let isDragging = false; 
+        let authMode = 'login';
+        
+        // Playlist State
+        let loopMode = 1; // 0: Don't Loop, 1: Loop All, 2: Loop 1
+        const loopModes = ["Don't Loop", "Loop All", "Loop 1"];
+        let isShuffle = false;
+        let localUploads = {}; // Added to handle local playback in demo mode
+
+        // --- AUTH LOGIC (With automatic Fallback) ---
+        async function handleAuth(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const errorEl = document.getElementById('auth-error');
+            errorEl.classList.add('hidden');
+            
+            try {
+                const endpoint = authMode === 'login' ? '/login' : '/signup';
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    state.user = u;
+                    if (data.custom_music) state.customMusic = data.custom_music;
+                    finishLogin();
+                    renderCustomMusic();
+                    showToast(authMode === 'login' ? "Welcome back" : "Account created");
+                } else {
+                    errorEl.innerText = data.error || "Authentication failed";
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.warn("Backend not detected, falling back to mock login.", err);
+                // MOCK LOGIN FALLBACK - Allows user to explore UI if python server is offline
+                state.user = u;
+                finishLogin();
+                renderCustomMusic();
+                showToast("Demo Mode: Logged in locally (Backend offline)");
+            }
+        }
+
+        function setAuthTab(mode) {
+            authMode = mode;
+            document.getElementById('tab-login').classList.toggle('text-white/40', mode === 'signup');
+            document.getElementById('tab-login').classList.toggle('border-b-2', mode === 'login');
+            document.getElementById('tab-signup').classList.toggle('text-white/40', mode === 'login');
+            document.getElementById('tab-signup').classList.toggle('border-b-2', mode === 'signup');
+            document.getElementById('auth-submit-btn').innerText = mode === 'login' ? 'INITIALIZE' : 'CREATE ACCOUNT';
+        }
+
+        function finishLogin() {
+            toggleModal();
+            document.getElementById('login-btn').classList.add('hidden');
+            document.getElementById('user-menu').classList.remove('hidden');
+            document.getElementById('username-display').innerText = `ID: ${state.user}`;
+        }
+
+        async function logout() {
+            try { await fetch('/logout', { method: 'POST' }); } catch(e) {}
+            location.reload();
+        }
+
+        async function checkSession() {
+            try {
+                const res = await fetch('/api/user');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.user) {
+                        state.user = data.user;
+                        state.customMusic = data.custom_music || [];
+                        finishLogin();
+                        renderCustomMusic();
+                    }
+                }
+            } catch(e) { console.log("No active session"); }
+        }
+
+        function toggleModal() {
+            const m = document.getElementById('auth-modal');
+            m.classList.toggle('opacity-0');
+            m.classList.toggle('pointer-events-none');
+            document.getElementById('auth-error').classList.add('hidden');
+        }
+
+        function togglePanel(id) {
+            document.getElementById(id).classList.toggle('panel-collapsed');
+            document.getElementById(`${id}-icon`).classList.toggle('rotate-180');
+        }
+
+        // --- TIMER / STOPWATCH / CLOCK LOGIC ---
+        function switchTimerMode(mode) {
+            clearInterval(timer.interval);
+            timer.isRunning = false;
+            timerMode = mode;
+            
+            // Update Active Tabs
+            ['timer', 'stopwatch', 'clock'].forEach(m => {
+                const btn = document.getElementById(`mode-${m}`);
+                btn.className = m === mode ? 
+                    "text-[10px] tracking-widest text-white border-b border-white pb-1 transition-all" : 
+                    "text-[10px] tracking-widest text-white/40 pb-1 hover:text-white/70 transition-all";
+            });
+            
+            // Update UI Elements
+            if (mode === 'timer') {
+                document.getElementById('display-timer').classList.remove('hidden');
+                document.getElementById('display-other').classList.add('hidden');
+                document.getElementById('timer-controls').classList.remove('hidden');
+                updateTimerDisplay();
+                document.getElementById('timer-toggle').innerText = "START";
+            } else if (mode === 'stopwatch') {
+                document.getElementById('display-timer').classList.add('hidden');
+                document.getElementById('display-other').classList.remove('hidden');
+                document.getElementById('timer-controls').classList.remove('hidden');
+                stopwatchTime = 0;
+                document.getElementById('display-other').innerText = "00:00";
+                document.getElementById('timer-toggle').innerText = "START";
+            } else if (mode === 'clock') {
+                document.getElementById('display-timer').classList.add('hidden');
+                document.getElementById('display-other').classList.remove('hidden');
+                document.getElementById('timer-controls').classList.add('hidden');
+                updateClock();
+                timer.interval = setInterval(updateClock, 1000); // Start clock ticks immediately
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hrs = now.getHours().toString().padStart(2, '0');
+            const mins = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('display-other').innerText = `${hrs}:${mins}`;
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timer.timeLeft / 60).toString().padStart(2, '0');
+            const s = (timer.timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer-min').value = m;
+            document.getElementById('timer-sec').value = s;
+        }
+
+        function updateTimerFromInput() {
+            const m = parseInt(document.getElementById('timer-min').value) || 0;
+            const s = parseInt(document.getElementById('timer-sec').value) || 0;
+            timer.timeLeft = (m * 60) + s;
+        }
+
+        function toggleTimer() {
+            if (timer.isRunning) { 
+                clearInterval(timer.interval); 
+                document.getElementById('timer-toggle').innerText = "START";
+            } else {
+                document.querySelectorAll('.timer-input').forEach(i => i.blur());
+                
+                if (timerMode === 'timer') {
+                    timer.interval = setInterval(() => {
+                        if (timer.timeLeft > 0) { timer.timeLeft--; updateTimerDisplay(); }
+                        else { 
+                            clearInterval(timer.interval); 
+                            timer.isRunning = false;
+                            document.getElementById('timer-toggle').innerText = "START";
+                            showToast("Focus Session Complete"); 
+                        }
+                    }, 1000);
+                } else if (timerMode === 'stopwatch') {
+                    timer.interval = setInterval(() => {
+                        stopwatchTime++;
+                        const m = Math.floor(stopwatchTime / 60).toString().padStart(2, '0');
+                        const s = (stopwatchTime % 60).toString().padStart(2, '0');
+                        document.getElementById('display-other').innerText = `${m}:${s}`;
+                    }, 1000);
+                }
+                document.getElementById('timer-toggle').innerText = "PAUSE";
+            }
+            timer.isRunning = !timer.isRunning;
+        }
+
+        function resetTimer() {
+            clearInterval(timer.interval);
+            timer.isRunning = false;
+            document.getElementById('timer-toggle').innerText = "START";
+            
+            if (timerMode === 'timer') {
+                timer.timeLeft = timer.initialMinutes * 60;
+                updateTimerDisplay();
+            } else if (timerMode === 'stopwatch') {
+                stopwatchTime = 0;
+                document.getElementById('display-other').innerText = "00:00";
+            }
+        }
+
+        // --- PLAYLIST LOGIC ---
+        function getPlaylist() {
+            const defaults = [
+                { id: '2 AM_Lofi.mp3', label: '2 AM', isUpload: false },
+                { id: 'Dreamland_Lofi.mp3', label: 'Dreamland', isUpload: false },
+                { id: 'Taiyaki_Lofi.mp3', label: 'Taiyaki', isUpload: false }
+            ];
+            const uploads = state.customMusic.map(f => ({
+                id: f, label: f.split('_').pop().replace('.mp3', ''), isUpload: true
+            }));
+            return [...defaults, ...uploads];
+        }
+
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            const btn = document.getElementById('shuffle-btn');
+            btn.classList.toggle('border-transparent');
+            btn.classList.toggle('border-white/40');
+            btn.classList.toggle('bg-white/10');
+            showToast(isShuffle ? "Shuffle On" : "Shuffle Off");
+        }
+
+        function playNext() {
+            if(!state.music.file) return;
+            const list = getPlaylist();
+            
+            if (isShuffle && list.length > 1) {
+                let currentIdx = list.findIndex(item => item.id === state.music.file);
+                let nextIdx = currentIdx;
+                while (nextIdx === currentIdx) { nextIdx = Math.floor(Math.random() * list.length); }
+                toggleAudio('music', list[nextIdx].id, list[nextIdx].isUpload, true);
+                return;
+            }
+
+            let idx = list.findIndex(item => item.id === state.music.file);
+            if (idx === -1) return;
+            
+            idx++;
+            if (idx >= list.length) {
+                if (loopMode === 1 || loopMode === 2) idx = 0;
+                else { stopAudio('music'); return; }
+            }
+            const nextTrack = list[idx];
+            toggleAudio('music', nextTrack.id, nextTrack.isUpload, true);
+        }
+
+        function playPrevious() {
+            if(!state.music.file) return;
+            const list = getPlaylist();
+            let idx = list.findIndex(item => item.id === state.music.file);
+            if (idx === -1) return;
+            
+            if (state.music.obj && state.music.obj.currentTime > 3) {
+                state.music.obj.currentTime = 0;
+                return;
+            }
+
+            idx--;
+            if (idx < 0) idx = list.length - 1;
+            const prevTrack = list[idx];
+            toggleAudio('music', prevTrack.id, prevTrack.isUpload, true);
+        }
+
+        function toggleLoop() {
+            loopMode = (loopMode + 1) % 3;
+            document.getElementById('loop-text').innerText = loopModes[loopMode];
+            if (state.music.obj) state.music.obj.loop = (loopMode === 2);
+            showToast(`Playlist mode: ${loopModes[loopMode]}`);
+        }
+
+        // --- PROGRESS BAR VISUALS ---
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function updateProgressBar() {
+            if (!state.music.obj) return;
+            const duration = state.music.obj.duration || 0;
+            const current = state.music.obj.currentTime;
+            
+            if (!isDragging && duration > 0) {
+                const pct = (current / duration) * 100;
+                const slider = document.getElementById('music-progress');
+                slider.value = pct;
+                // Purple Gradient
+                slider.style.background = `linear-gradient(to right, #a855f7 ${pct}%, rgba(255, 255, 255, 0.2) ${pct}%)`;
+                document.getElementById('track-current-time').innerText = formatTime(current);
+            }
+            document.getElementById('track-duration').innerText = formatTime(duration);
+        }
+
+        function seekMusic(val) {
+            if (!state.music.obj) return;
+            const duration = state.music.obj.duration || 0;
+            state.music.obj.currentTime = (val / 100) * duration;
+            document.getElementById('track-current-time').innerText = formatTime(state.music.obj.currentTime);
+            // Snap gradient to match
+            const slider = document.getElementById('music-progress');
+            slider.style.background = `linear-gradient(to right, #a855f7 ${val}%, rgba(255, 255, 255, 0.2) ${val}%)`;
+        }
+
+        // --- VISUAL ENGINE ---
+        function setVideo(file, btn) {
+            const container = document.getElementById('video-container');
+            const old = container.querySelector('video');
+            const v = document.createElement('video');
+            v.autoplay = v.loop = v.muted = v.playsInline = true;
+            v.className = 'absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000';
+            v.src = `${MEDIA_BASE}videos/${file}`;
+            v.onerror = () => { if(FALLBACKS.videos[file]) v.src = FALLBACKS.videos[file]; };
+            container.appendChild(v);
+            setTimeout(() => {
+                v.classList.remove('opacity-0');
+                if(old) { old.classList.add('opacity-0'); setTimeout(() => old.remove(), 1000); }
+            }, 50);
+            document.querySelectorAll('.scene-btn').forEach(b => b.classList.remove('active-scene', 'glass'));
+            if(btn) btn.classList.add('active-scene', 'glass');
+            state.video = file;
+            syncState();
+        }
+
+        // --- AUDIO ENGINE ---
+        function toggleAudio(type, file, isUpload = false, force = false) {
+            let cat = state[type];
+            if (cat.file === file && !force) {
+                cat.obj.paused ? cat.obj.play() : cat.obj.pause();
+                if(type === 'music') updateActiveMusicBtn(cat.obj.paused ? null : file);
+                updateStatus();
+                return;
+            }
+
+            stopAudio(type);
+            cat.file = file;
+            cat.isUpload = isUpload;
+            
+            const path = isUpload ? UPLOAD_BASE : `${MEDIA_BASE}audio/${type === 'music' ? 'music' : 'ambience'}/`;
+            let audioSrc = `${path}${file}`;
+            
+            // Play local file directly if running in demo mode
+            if (isUpload && localUploads[file]) {
+                audioSrc = localUploads[file];
+            }
+            
+            cat.obj = new Audio(audioSrc);
+            
+            cat.obj.onerror = () => {
+                if (!isUpload && FALLBACKS.audio[file]) cat.obj.src = FALLBACKS.audio[file];
+                cat.obj.play();
+            };
+            cat.obj.volume = document.getElementById(`${type}-vol`).value;
+
+            if (type === 'music') {
+                cat.obj.loop = (loopMode === 2);
+                cat.obj.addEventListener('timeupdate', updateProgressBar);
+                cat.obj.addEventListener('ended', handleTrackEnd);
+                document.getElementById('player-bar').classList.remove('translate-y-full');
+                updateActiveMusicBtn(file);
+            } else {
+                cat.obj.loop = true;
+                updateActiveAmbienceBtn(file);
+            }
+
+            cat.obj.play().catch(e => console.error("Playback failed", e));
+            updateStatus();
+            syncState();
+        }
+
+        function handleTrackEnd() {
+            if (loopMode === 2) return; // Loop 1
+            if (loopMode === 1 || isShuffle) { playNext(); } 
+            else {
+                const list = getPlaylist();
+                const idx = list.findIndex(item => item.id === state.music.file);
+                if (idx === list.length - 1) stopAudio('music');
+                else playNext();
+            }
+        }
+
+        function stopAudio(type) {
+            if(state[type].obj) { state[type].obj.pause(); state[type].obj = null; }
+            state[type].file = null;
+            if(type === 'music') {
+                document.getElementById('player-bar').classList.add('translate-y-full');
+                updateActiveMusicBtn(null);
+            } else {
+                updateActiveAmbienceBtn(null);
+            }
+            updateStatus();
+        }
+
+        function toggleMusicPlayPause() {
+            if (!state.music.obj) return;
+            if (state.music.obj.paused) state.music.obj.play();
+            else state.music.obj.pause();
+            updateStatus();
+        }
+
+        function updateActiveMusicBtn(filename) {
+            document.querySelectorAll('.music-btn').forEach(b => b.classList.remove('bg-white/20', 'border-white/20'));
+            const titleEl = document.getElementById('now-playing-title');
+            
+            if (filename) {
+                const btn = document.querySelector(`.music-btn[data-id="${filename}"]`);
+                if (btn) btn.classList.add('bg-white/20', 'border-white/20');
+                const list = getPlaylist();
+                const track = list.find(t => t.id === filename);
+                if(titleEl) titleEl.innerText = track ? track.label : filename;
+            } else if (titleEl) {
+                titleEl.innerText = 'No Track';
+            }
+        }
+
+        function updateActiveAmbienceBtn(filename) {
+            document.querySelectorAll('.amb-btn').forEach(b => {
+                b.classList.remove('bg-white/20', 'border-white/20');
+                if (filename && b.dataset.id === filename) b.classList.add('bg-white/20', 'border-white/20');
+            });
+        }
+
+        function changeVolume(type, val) {
+            if (state[type].obj) state[type].obj.volume = val;
+            state[type].vol = val;
+        }
+
+        function updateStatus() {
+            const m = state.music.obj && !state.music.obj.paused;
+            const a = state.ambience.obj && !state.ambience.obj.paused;
+            document.getElementById('status-text').innerText = (m && a) ? "IMMERSIVE" : (m ? "MUSIC" : (a ? "AMBIENCE" : "SILENT"));
+            document.getElementById('equalizer').classList.toggle('eq-active', m || a);
+
+            const playBtn = document.getElementById('player-play-btn');
+            if (playBtn) {
+                if (m) playBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+                else playBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
+            }
+        }
+
+        // --- UPLOAD HANDLER ---
+        async function handleFileUpload(input) {
+            if (!state.user) return showToast("Login to upload music");
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            showToast("Uploading track...");
+            try {
+                const res = await fetch('/upload_music', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.filename) {
+                    state.customMusic.push(data.filename);
+                    renderCustomMusic();
+                    showToast("Track uploaded successfully");
+                } else {
+                    throw new Error("Upload Failed");
+                }
+            } catch (e) {
+                // DEMO MODE: Store file URL locally to play immediately in browser
+                const localUrl = URL.createObjectURL(file);
+                localUploads[file.name] = localUrl;
+                if (!state.customMusic.includes(file.name)) {
+                    state.customMusic.push(file.name);
+                }
+                renderCustomMusic();
+                showToast("Demo: Track added and ready to play");
+            }
+            
+            // Clear input so same file can be uploaded again if needed
+            input.value = "";
+        }
+
+        function renderCustomMusic() {
+            const list = document.getElementById('music-list');
+            const playlist = getPlaylist();
+            list.innerHTML = '';
+            
+            playlist.forEach(track => {
+                const btn = document.createElement('button');
+                btn.className = `audio-btn music-btn p-2 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] border border-transparent transition-all truncate ${track.isUpload ? 'border-white/20' : ''}`;
+                btn.dataset.id = track.id;
+                btn.onclick = () => toggleAudio('music', track.id, track.isUpload);
+                btn.innerText = track.label;
+                list.appendChild(btn);
+            });
+            updateActiveMusicBtn(state.music.file);
+        }
+
+        function syncState() {
+            if(!state.user) return;
+            clearTimeout(syncTimeout);
+            syncTimeout = setTimeout(async () => {
+                try {
+                    await fetch('/sync', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ video: state.video, music_track: state.music.file, music_is_upload: state.music.isUpload, custom_music: state.customMusic })
+                    });
+                } catch(e) {}
+            }, 2000);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.remove('opacity-0', 'translate-y-4');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 2500);
+        }
+
+        window.onload = () => { 
+            checkSession(); 
+            setVideo('Apart_Rain_1.mp4'); 
+            renderCustomMusic(); 
+            switchTimerMode('timer'); // Initialize timer layout
+        };
+    </script>
+</body>
+</html>
